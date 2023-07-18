@@ -1,0 +1,36 @@
+name: Check
+
+on:
+  pull_request:
+    paths:
+      - src/**
+      - Cargo.lock
+      - Cargo.toml
+      - .github/workflows/check.yml
+  push:
+    branches:
+      - main
+    paths:
+      - src/**
+      - Cargo.lock
+      - Cargo.toml
+      - .github/workflows/check.yml
+
+# Fail on warnings
+env:
+  RUSTFLAGS: "-Dwarnings"
+
+jobs:
+  clippy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - run: cargo clippy
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - run: cargo test
