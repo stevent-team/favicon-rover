@@ -68,7 +68,7 @@ favicon-rover serve --help # show help information
 
 ### CORS
 
-By default, any origin is allowed to request from this API. To lock it down, use the `--origin` command line options to specify any amount of origins. If an origin starts and ends with `/` it will be treated as a regexp. For example `favicon-rover serve -o http://example1.com -o /\.example2\.com$/` will accept any request from "http://example1.com" or from a subdomain of "example2.com".
+By default, any origin is allowed to make a request to this API. To lock it down, use the `--origin` command line options to specify any amount of origins. If an origin starts and ends with `/` it will be treated as a regexp. For example `favicon-rover serve -o http://example1.com -o /\.example2\.com$/` will accept any request from "http://example1.com" or from a subdomain of "example2.com".
 
 ## Development
 
