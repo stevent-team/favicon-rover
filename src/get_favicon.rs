@@ -1,15 +1,49 @@
-use reqwest::header::{HeaderValue, CONTENT_TYPE};
+use image::imageops::FilterType;
 use std::io;
 use thiserror::Error;
 use url::Url;
 
+const DEFAULT_IMAGE_SIZE: u32 = 256;
+
 #[derive(Debug)]
-pub enum Favicon {
-    Image(image::DynamicImage),
-    Fallback(image::DynamicImage, GetFaviconError),
+struct Image {
+    pub data: image::DynamicImage,
+    pub format: Option<image::ImageFormat>,
 }
 
 #[derive(Debug)]
+pub enum Favicon {
+    Image(Image),
+    Fallback(Image, GetFaviconError),
+}
+
+impl Favicon {
+    pub fn image(&self) -> &Image {
+        match self {
+            Favicon::Image(image) => &image,
+            Favicon::Fallback(image, _) => &image,
+        }
+    }
+
+    fn set_image_data(&mut self, data: image::DynamicImage) {
+        match self {
+            Self::Image(ref mut img) => {
+                (*img).data = data;
+            }
+            Self::Fallback(ref mut img, _) => {
+                (*img).data = data;
+            }
+        }
+    }
+
+    pub fn resize(&mut self, size: u32) {
+        let image = self.image();
+        let image = image.data.resize_to_fill(size, size, FilterType::Lanczos3);
+        self.set_image_data(image);
+    }
+}
+
+#[derive(Debug, Clone)]
 struct Link {
     href: String,
     size: Option<usize>,
@@ -28,7 +62,7 @@ pub enum GetFaviconError {
 }
 
 #[derive(Error, Debug)]
-enum ScrapeError {
+pub enum ScrapeError {
     #[error(transparent)]
     Network(#[from] reqwest::Error),
 
@@ -42,14 +76,28 @@ enum ScrapeError {
     LinkNotFound,
 }
 
-pub async fn get_favicon(target_url: &Url) -> Favicon {
+pub async fn get_favicon(target_url: &Url, size: Option<u32>) -> Favicon {
     match fetch_favicon(target_url).await {
-        Ok(image) => image,
-        Err(error) => Favicon::Fallback(generate_fallback(target_url).await, error),
+        // We have an image from the target, resize if applicable and return
+        Ok(mut image) => {
+            if let Some(size) = size {
+                image.resize(size);
+            }
+            image
+        }
+
+        // We didn't get an image, generate one
+        Err(error) => Favicon::Fallback(
+            Image {
+                data: generate_fallback(target_url, size.unwrap_or(DEFAULT_IMAGE_SIZE)).await,
+                format: None,
+            },
+            error,
+        ),
     }
 }
 
-async fn generate_fallback(target_url: &Url) -> image::DynamicImage {
+async fn generate_fallback(target_url: &Url, size: u32) -> image::DynamicImage {
     todo!()
 }
 
@@ -74,9 +122,13 @@ pub async fn fetch_favicon(target_url: &Url) -> Result<Favicon, GetFaviconError>
 
     // Decode the image!
     // TODO: this is blocking, should it be in a tokio blocking_task?
-    let image = image_reader.decode()?;
+    let image_format = image_reader.format(); // TODO: this being none might need to be an error
+    let image_data = image_reader.decode()?;
 
-    Ok(Favicon::Image(image))
+    Ok(Favicon::Image(Image {
+        data: image_data,
+        format: image_format,
+    }))
 }
 
 enum ImageFormat {

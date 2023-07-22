@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use clap::{Parser, Subcommand, ValueEnum};
 use url::Url;
 
@@ -28,15 +30,15 @@ pub enum Command {
 
         /// Square pixel size of the favicon
         #[arg(short, long)]
-        size: Option<usize>,
+        size: Option<u32>,
 
         /// Path to save favicon to if not using stdout
         #[arg(short, long)]
-        out: Option<String>,
+        out: Option<PathBuf>,
 
         /// Image format to save favicon as (overrides file extension if provided)
-        #[arg(value_enum, short, long, default_value_t = ImageFormatOutput::Webp)]
-        format: ImageFormatOutput,
+        #[arg(value_enum, short, long)]
+        format: Option<ImageFormatOutput>,
     },
 
     /// Start a favicon scout web server
