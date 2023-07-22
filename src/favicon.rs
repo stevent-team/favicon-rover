@@ -17,8 +17,8 @@ pub enum Favicon {
 impl Favicon {
     pub fn image(&self) -> &Image {
         match self {
-            Favicon::Image(image) => &image,
-            Favicon::Fallback(image, _) => &image,
+            Favicon::Image(image) => image,
+            Favicon::Fallback(image, _) => image,
         }
     }
 
@@ -30,10 +30,10 @@ impl Favicon {
     fn set_image_format(&mut self, format: image::ImageFormat) {
         match self {
             Self::Image(ref mut img) => {
-                (*img).format = Some(format);
+                img.format = Some(format);
             }
             Self::Fallback(ref mut img, _) => {
-                (*img).format = Some(format);
+                img.format = Some(format);
             }
         }
     }
@@ -41,10 +41,10 @@ impl Favicon {
     fn set_image_data(&mut self, data: image::DynamicImage) {
         match self {
             Self::Image(ref mut img) => {
-                (*img).data = data;
+                img.data = data;
             }
             Self::Fallback(ref mut img, _) => {
-                (*img).data = data;
+                img.data = data;
             }
         }
     }

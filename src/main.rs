@@ -3,6 +3,9 @@ mod favicon;
 mod get_favicon;
 mod image_writer;
 
+#[cfg(feature = "server")]
+mod server;
+
 use std::io::Write;
 
 use clap::Parser;
@@ -40,9 +43,11 @@ async fn main() {
             writer.flush().unwrap();
         }
 
-        Some(Command::Serve { .. }) => {
-            // TODO
+        #[cfg(feature = "server")]
+        Some(Command::Serve(options)) => {
+            server::start_server(options).await;
         }
+
         None => {}
     }
 }

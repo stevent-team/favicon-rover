@@ -13,7 +13,7 @@ pub enum ImageWriter {
 impl ImageWriter {
     pub fn new(file_path: Option<PathBuf>) -> Self {
         match file_path {
-            Some(path) => Self::ToFile(BufWriter::new(fs::File::create(path.clone()).unwrap())),
+            Some(path) => Self::ToFile(BufWriter::new(fs::File::create(path).unwrap())),
             None => Self::ToStdout(io::Cursor::new(Vec::new())),
         }
     }
@@ -42,7 +42,7 @@ impl io::Write for ImageWriter {
             ImageWriter::ToFile(writer) => writer.flush(),
             ImageWriter::ToStdout(writer) => writer
                 .flush()
-                .and_then(|_| io::stdout().write_all(&writer.get_ref())),
+                .and_then(|_| io::stdout().write_all(writer.get_ref())),
         }
     }
 }

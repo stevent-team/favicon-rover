@@ -1,5 +1,8 @@
 use std::path::PathBuf;
 
+#[cfg(feature = "server")]
+use clap::Args;
+
 use clap::{Parser, Subcommand, ValueEnum};
 use url::Url;
 
@@ -55,18 +58,23 @@ pub enum Command {
         format: Option<ImageFormatOutput>,
     },
 
-    /// Start a favicon scout web server
-    Serve {
-        /// Host to use for http server
-        #[arg(long, default_value_t = String::from("localhost"), value_name = "URL")]
-        host: String,
+    /// Start a favicon rover web server
+    #[cfg(feature = "server")]
+    Serve(ServerOptions),
+}
 
-        /// Port to use for http server
-        #[arg(short, long, default_value_t = 3000)]
-        port: u16,
+#[cfg(feature = "server")]
+#[derive(Args, Debug)]
+pub struct ServerOptions {
+    /// Host to use for http server
+    #[arg(long, default_value_t = String::from("localhost"), value_name = "URL")]
+    host: String,
 
-        /// URL or regex allowed by CORS
-        #[arg(short, long, default_values_t = [String::from("*")])]
-        origin: Vec<String>,
-    },
+    /// Port to use for http server
+    #[arg(short, long, default_value_t = 3000)]
+    port: u16,
+
+    /// URL or regex allowed by CORS
+    #[arg(short, long, default_values_t = [String::from("*")])]
+    origin: Vec<String>,
 }
