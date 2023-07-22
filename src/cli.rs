@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand, ValueEnum};
+use url::Url;
 
 #[derive(Clone, ValueEnum, Debug)]
 pub enum ImageFormatOutput {
@@ -23,7 +24,7 @@ pub enum Command {
     /// Fetch the favicon for a specified url
     Get {
         /// Host to fetch the favicon for
-        url: Option<String>,
+        url: Url,
 
         /// Square pixel size of the favicon
         #[arg(short, long)]

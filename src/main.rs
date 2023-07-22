@@ -3,6 +3,8 @@ mod get_favicon;
 
 use clap::Parser;
 use cli::{Cli, Command};
+use get_favicon::get_favicon;
+use url::Url;
 
 #[tokio::main]
 async fn main() {
@@ -14,7 +16,8 @@ async fn main() {
             size,
             format,
         }) => {
-            let favicon = get_favicon(&url);
+            let favicon = get_favicon(&url).await;
+            dbg!(favicon);
         }
         Some(serve @ Command::Serve { .. }) => {
             // TODO
