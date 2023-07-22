@@ -1,5 +1,7 @@
-mod cli;
+mod cli_args;
+mod fallback;
 mod favicon;
+mod favicon_image;
 mod get_favicon;
 mod image_writer;
 
@@ -9,8 +11,8 @@ mod server;
 use std::io::Write;
 
 use clap::Parser;
-use cli::{Cli, Command};
-use get_favicon::get_favicon;
+use cli_args::{Cli, Command};
+use get_favicon::fetch_favicon;
 use image_writer::ImageWriter;
 
 #[tokio::main]
@@ -24,13 +26,24 @@ async fn main() {
             format,
         }) => {
             // Get favicon (may be a fallback)
-            let mut favicon = get_favicon(&url, size).await;
+            let mut favicon = match fetch_favicon(&url).await {
+                Ok(favicon) => favicon,
+                Err(err) => {
+                    eprintln!("failed to fetch favicon: {}", err);
+                    return;
+                }
+            };
 
             // Can we guess the format from the "out" path?
             let format: Option<image::ImageFormat> = format.map(|f| f.into()).or_else(|| {
                 out.as_ref()
                     .and_then(|path| image::ImageFormat::from_path(path).ok())
             });
+
+            // Resize the image
+            if let Some(size) = size {
+                favicon.resize(size)
+            }
 
             // Format the image
             if let Some(format) = format {
@@ -45,7 +58,7 @@ async fn main() {
 
         #[cfg(feature = "server")]
         Some(Command::Serve(options)) => {
-            server::start_server(options).await;
+            server::start_server(options).await.unwrap();
         }
 
         None => {}

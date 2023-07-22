@@ -67,14 +67,14 @@ pub enum Command {
 #[derive(Args, Debug)]
 pub struct ServerOptions {
     /// Host to use for http server
-    #[arg(long, default_value_t = String::from("localhost"), value_name = "URL")]
-    host: String,
+    #[arg(long, default_value_t = String::from("127.0.0.1"), value_name = "URL")]
+    pub host: String,
 
     /// Port to use for http server
     #[arg(short, long, default_value_t = 3000)]
-    port: u16,
+    pub port: u16,
 
     /// URL or regex allowed by CORS
     #[arg(short, long, default_values_t = [String::from("*")])]
-    origin: Vec<String>,
+    pub origin: Vec<String>,
 }

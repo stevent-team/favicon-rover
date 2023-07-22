@@ -2,8 +2,7 @@ use std::fs;
 use std::io::{self, BufWriter};
 use std::path::PathBuf;
 
-use crate::favicon::Image;
-use image::ImageError;
+use crate::favicon_image::{FaviconImage, WriteImageError};
 
 pub enum ImageWriter {
     ToFile(BufWriter<fs::File>),
@@ -18,14 +17,9 @@ impl ImageWriter {
         }
     }
 
-    pub fn write_image(&mut self, image: &Image) -> Result<(), ImageError> {
-        let format: image::ImageOutputFormat = image
-            .format
-            .unwrap_or(image::ImageFormat::Png)
-            .try_into()
-            .unwrap();
-
-        image.data.write_to(self, format)
+    pub fn write_image(&mut self, image: &FaviconImage) -> Result<(), WriteImageError> {
+        let format = image.format.unwrap_or(image::ImageFormat::Png);
+        image.write_to(self, format)
     }
 }
 

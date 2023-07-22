@@ -12,10 +12,14 @@ authors = ["Benji Grant", "Ewan Breakey"]
 
 [features]
 default = []
-server = ["dep:axum"]
+server = ["dep:axum", "dep:tower-http", "dep:tower", "dep:tracing-subscriber", "dep:tracing"]
 
 [dependencies]
 axum = { version = "0.6.19", optional = true }
+tower-http = { version = "0.4.3", features = ["trace", "cors"], optional = true }
+tower = { version = "0.4.13", optional = true }
+tracing = { version = "0.1.37", optional = true }
+tracing-subscriber = { version = "0.3.17", optional = true }
 
 clap = { version = "4.3.15", features = ["derive"] }
 image = "0.24.6"

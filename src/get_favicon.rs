@@ -2,9 +2,9 @@ use std::io;
 use thiserror::Error;
 use url::Url;
 
-use crate::favicon::{Favicon, Image};
+use crate::{fallback::generate_fallback, favicon::Favicon, favicon_image::FaviconImage};
 
-const DEFAULT_IMAGE_SIZE: u32 = 256;
+pub const DEFAULT_IMAGE_SIZE: u32 = 256;
 
 #[derive(Debug, Clone)]
 struct Link {
@@ -22,6 +22,9 @@ pub enum GetFaviconError {
 
     #[error("Failed to decode image: {0}")]
     ImageError(#[from] image::ImageError),
+
+    #[error("Provided URL is not a valid url")]
+    InvalidUrl,
 }
 
 #[derive(Error, Debug)]
@@ -51,17 +54,10 @@ pub async fn get_favicon(target_url: &Url, size: Option<u32>) -> Favicon {
 
         // We didn't get an image, generate one
         Err(error) => Favicon::Fallback(
-            Image {
-                data: generate_fallback(target_url, size.unwrap_or(DEFAULT_IMAGE_SIZE)).await,
-                format: None,
-            },
+            generate_fallback(target_url.to_string(), size.unwrap_or(DEFAULT_IMAGE_SIZE)),
             error,
         ),
     }
-}
-
-async fn generate_fallback(target_url: &Url, size: u32) -> image::DynamicImage {
-    todo!()
 }
 
 /// Fetch the favicon for a given url
@@ -88,7 +84,7 @@ pub async fn fetch_favicon(target_url: &Url) -> Result<Favicon, GetFaviconError>
     let image_format = image_reader.format(); // TODO: this being none might need to be an error
     let image_data = image_reader.decode()?;
 
-    Ok(Favicon::Image(Image {
+    Ok(Favicon::Image(FaviconImage {
         data: image_data,
         format: image_format,
     }))
