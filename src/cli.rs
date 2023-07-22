@@ -14,6 +14,20 @@ pub enum ImageFormatOutput {
     Tiff,
 }
 
+impl From<ImageFormatOutput> for image::ImageFormat {
+    fn from(value: ImageFormatOutput) -> Self {
+        match value {
+            ImageFormatOutput::Png => image::ImageFormat::Png,
+            ImageFormatOutput::Jpeg => image::ImageFormat::Jpeg,
+            ImageFormatOutput::Webp => image::ImageFormat::WebP,
+            ImageFormatOutput::Bmp => image::ImageFormat::Bmp,
+            ImageFormatOutput::Ico => image::ImageFormat::Ico,
+            ImageFormatOutput::Gif => image::ImageFormat::Gif,
+            ImageFormatOutput::Tiff => image::ImageFormat::Tiff,
+        }
+    }
+}
+
 #[derive(Parser, Debug)]
 #[command(author, version, about)]
 pub struct Cli {

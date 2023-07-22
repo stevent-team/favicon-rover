@@ -1,47 +1,10 @@
-use image::imageops::FilterType;
 use std::io;
 use thiserror::Error;
 use url::Url;
 
+use crate::favicon::{Favicon, Image};
+
 const DEFAULT_IMAGE_SIZE: u32 = 256;
-
-#[derive(Debug)]
-struct Image {
-    pub data: image::DynamicImage,
-    pub format: Option<image::ImageFormat>,
-}
-
-#[derive(Debug)]
-pub enum Favicon {
-    Image(Image),
-    Fallback(Image, GetFaviconError),
-}
-
-impl Favicon {
-    pub fn image(&self) -> &Image {
-        match self {
-            Favicon::Image(image) => &image,
-            Favicon::Fallback(image, _) => &image,
-        }
-    }
-
-    fn set_image_data(&mut self, data: image::DynamicImage) {
-        match self {
-            Self::Image(ref mut img) => {
-                (*img).data = data;
-            }
-            Self::Fallback(ref mut img, _) => {
-                (*img).data = data;
-            }
-        }
-    }
-
-    pub fn resize(&mut self, size: u32) {
-        let image = self.image();
-        let image = image.data.resize_to_fill(size, size, FilterType::Lanczos3);
-        self.set_image_data(image);
-    }
-}
 
 #[derive(Debug, Clone)]
 struct Link {
@@ -129,33 +92,6 @@ pub async fn fetch_favicon(target_url: &Url) -> Result<Favicon, GetFaviconError>
         data: image_data,
         format: image_format,
     }))
-}
-
-enum ImageFormat {
-    Png,
-    Jpeg,
-    Webp,
-    Bmp,
-    Ico,
-    Gif,
-    Tiff,
-    Svg,
-}
-
-impl ImageFormat {
-    // pub fn from_content_type(content_type: &HeaderValue) -> Option<Self> {
-    //     match content_type.to_str().ok()? {
-    //         "image/png" => Some(Self::Png),
-    //         "image/jpeg" => Some(Self::Jpeg),
-    //         "image/webp" => Some(Self::Webp),
-    //         "image/bmp" => Some(Self::Bmp),
-    //         "image/gif" => Some(Self::Gif),
-    //         "image/tiff" => Some(Self::Tiff),
-    //         "image/svg+xml" => Some(Self::Svg),
-    //         "image/vnd.microsoft.icon" | "image/x-icon" => Some(Self::Ico),
-    //         _ => None,
-    //     }
-    // }
 }
 
 /// Scrape the <link /> tags from a given URL to find a favicon url
