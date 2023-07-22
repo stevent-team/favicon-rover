@@ -12,3 +12,10 @@ authors = ["Benji Grant", "Ewan Breakey"]
 
 [dependencies]
 clap = { version = "4.3.15", features = ["derive"] }
+image = "0.24.6"
+reqwest = "0.11.18"
+resvg = "0.35.0"
+thiserror = "1.0.43"
+tl = "0.7.7"
+tokio = { version = "1.29.1", features = ["full"] }
+url = "2.4.0"
