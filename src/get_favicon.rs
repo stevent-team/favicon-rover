@@ -45,7 +45,7 @@ enum ScrapeError {
 pub async fn get_favicon(target_url: &Url) -> Favicon {
     match fetch_favicon(target_url).await {
         Ok(image) => image,
-        Err(error) => Favicon::Fallback(generate_fallback(target_url), error),
+        Err(error) => Favicon::Fallback(generate_fallback(target_url).await, error),
     }
 }
 
