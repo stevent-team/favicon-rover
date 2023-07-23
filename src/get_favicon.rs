@@ -20,11 +20,17 @@ pub enum GetFaviconError {
     #[error(transparent)]
     Network(#[from] reqwest::Error),
 
+    #[error(transparent)]
+    TokioError(#[from] tokio::task::JoinError),
+
     #[error("Failed to decode image: {0}")]
     ImageError(#[from] image::ImageError),
 
     #[error("Provided URL is not a valid url")]
     InvalidUrl,
+
+    #[error("Cannot decode the image type")]
+    CannotDecode,
 }
 
 #[derive(Error, Debug)]
@@ -80,9 +86,27 @@ pub async fn fetch_favicon(target_url: &Url) -> Result<Favicon, GetFaviconError>
         .expect("Cursor IO shouldn't fail");
 
     // Decode the image!
-    // TODO: this is blocking, should it be in a tokio blocking_task?
-    let image_format = image_reader.format(); // TODO: this being none might need to be an error
-    let image_data = image_reader.decode()?;
+    let image_format = image_reader.format();
+    let image_data = tokio::task::spawn_blocking(move || {
+        match image_format {
+            // Use `webp` crate to decode WebPs
+            Some(image::ImageFormat::WebP) => {
+                let data = image_reader.into_inner().into_inner();
+                let decoder = webp::Decoder::new(&data);
+                decoder
+                    .decode()
+                    .ok_or(GetFaviconError::CannotDecode)
+                    .map(|webp| webp.to_image())
+            }
+
+            // Use image to decode other
+            Some(_) => image_reader.decode().map_err(|e| e.into()),
+
+            // We don't know the format
+            None => Err(GetFaviconError::CannotDecode),
+        }
+    })
+    .await??;
 
     Ok(Favicon::Image(FaviconImage {
         data: image_data,

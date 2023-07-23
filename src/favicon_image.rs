@@ -1,6 +1,8 @@
 use std::io;
 use thiserror::Error;
 
+const WEBP_QUALITY: f32 = 70.0;
+
 #[derive(Debug)]
 pub struct FaviconImage {
     pub data: image::DynamicImage,
@@ -14,6 +16,9 @@ pub enum WriteImageError {
 
     #[error("Unsupported image format")]
     UnsupportedImageFormat,
+
+    #[error(transparent)]
+    IOError(#[from] io::Error),
 }
 
 impl FaviconImage {
@@ -22,6 +27,11 @@ impl FaviconImage {
         writer: &mut (impl io::Write + io::Seek),
         format: image::ImageFormat,
     ) -> Result<(), WriteImageError> {
+        // Seperately handle output of webp
+        if format == image::ImageFormat::WebP {
+            return self.write_to_webp(writer);
+        }
+
         // Convert image format to output format type
         let output_format: image::ImageOutputFormat = format
             .try_into()
@@ -29,6 +39,16 @@ impl FaviconImage {
 
         // Write image
         self.data.write_to(writer, output_format)?;
+        Ok(())
+    }
+
+    fn write_to_webp(
+        &self,
+        writer: &mut (impl io::Write + io::Seek),
+    ) -> Result<(), WriteImageError> {
+        let encoder = webp::Encoder::from_image(&self.data).expect("Image format is supported");
+        let webp = encoder.encode(WEBP_QUALITY);
+        writer.write_all(webp.as_ref())?;
         Ok(())
     }
 }
@@ -41,8 +61,8 @@ mod server {
     impl IntoResponse for FaviconImage {
         fn into_response(self) -> axum::response::Response {
             // Determine content type
-            // TODO: use accept-content header to determine
-            let format = image::ImageFormat::Png;
+            // TODO: use accept-content header to determine output format
+            let format = self.format.unwrap_or(image::ImageFormat::Jpeg);
             let content_type = format.content_type();
 
             // Write image to buffer

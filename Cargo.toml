@@ -30,3 +30,4 @@ thiserror = "1.0.43"
 tl = "0.7.7"
 tokio = { version = "1.29.1", features = ["full"] }
 url = "2.4.0"
+webp = "0.2.4"
