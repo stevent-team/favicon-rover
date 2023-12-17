@@ -1,7 +1,7 @@
 use crate::fallback::generate_fallback;
 use crate::favicon_image::FaviconImage;
 use crate::get_favicon::GetFaviconError;
-use axum::http::{HeaderMap, HeaderName, HeaderValue};
+use axum::http::{header, HeaderMap, HeaderName};
 use axum::response::IntoResponse;
 use image::ImageFormat;
 
@@ -19,21 +19,19 @@ impl FaviconResponse {
         format: ImageFormat,
     ) -> Self {
         // Construct response headers
-        let headers = match &res_value {
-            Ok(_) => Default::default(),
-            Err(error) => [
-                ("x-fallback", "true"),
-                ("x-fallback-reason", &error.to_string()),
-            ]
-            .into_iter()
-            .map(|(k, v)| {
-                (
-                    HeaderName::from_static(k),
-                    HeaderValue::from_str(v).unwrap(),
-                )
-            })
-            .collect(),
-        };
+        let mut headers = HeaderMap::new();
+        headers.insert(header::CACHE_CONTROL, "max-age=604800".parse().unwrap());
+
+        if let Err(error) = &res_value {
+            headers.insert(
+                HeaderName::from_static("x-fallback"),
+                "true".parse().unwrap(),
+            );
+            headers.insert(
+                HeaderName::from_static("x-fallback-reason"),
+                error.to_string().parse().unwrap(),
+            );
+        }
 
         // Get image or fallback w/ correct size
         let mut image = match res_value {

@@ -7,7 +7,7 @@ use std::sync::OnceLock;
 
 use accept_header::Accept;
 use axum::extract::{Path, Query};
-use axum::http::{header, HeaderMap, Method};
+use axum::http::{HeaderMap, Method};
 use axum::response::IntoResponse;
 use axum::{routing::get, Router};
 use image::ImageFormat;
@@ -85,14 +85,27 @@ pub async fn start_server(options: ServerOptions) -> Result<(), ServerError> {
         .init();
 
     // Cors
-    let mut cors = CorsLayer::new()
-        .allow_headers([header::ACCEPT, header::CONTENT_TYPE])
-        .allow_methods([Method::GET, Method::OPTIONS, Method::HEAD]);
+    let mut cors = CorsLayer::new().allow_headers(Any).allow_methods([
+        Method::GET,
+        Method::OPTIONS,
+        Method::HEAD,
+    ]);
 
     if options.origin.len() == 1 && options.origin[0] == "*" {
         cors = cors.allow_origin(Any)
-    } else if options.origin.len() > 1 && options.origin.iter().any(|o| o == "*") {
-        panic!("Wildcard (*) origin must be the only origin");
+    } else if options.origin.len() > 1
+        && options
+            .origin
+            .iter()
+            .all(|o| !o.starts_with('/') && !o.ends_with('/'))
+    {
+        cors = cors.allow_origin(
+            options
+                .origin
+                .iter()
+                .map(|o| o.parse().unwrap())
+                .collect::<Vec<_>>(),
+        )
     } else {
         cors = cors.allow_origin(AllowOrigin::predicate(move |origin, _| {
             cors_origins(&options.origin).iter().any(|o| match o {
