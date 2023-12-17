@@ -18,16 +18,16 @@ server = ["dep:axum", "dep:tower-http", "dep:tower", "dep:tracing-subscriber", "
 axum = { version = "0.6.19", optional = true }
 tower-http = { version = "0.4.3", features = ["trace", "cors"], optional = true }
 tower = { version = "0.4.13", optional = true }
-tracing = { version = "0.1.37", optional = true }
-tracing-subscriber = { version = "0.3.17", optional = true }
+tracing = { version = "0.1.40", optional = true }
+tracing-subscriber = { version = "0.3.18", optional = true }
 
-clap = { version = "4.3.15", features = ["derive"] }
-image = "0.24.6"
-reqwest = { version = "0.11.18", features = ["stream"] }
-resvg = "0.35.0"
+clap = { version = "4.4.11", features = ["derive"] }
+image = "0.24.7"
+reqwest = { version = "0.11.22", features = ["stream"] }
+resvg = "0.37.0"
 strum = { version = "0.25.0", features = ["derive"] }
-thiserror = "1.0.43"
+thiserror = "1.0.51"
 tl = "0.7.7"
-tokio = { version = "1.29.1", features = ["full"] }
-url = "2.4.0"
-webp = "0.2.4"
+tokio = { version = "1.35.0", features = ["full"] }
+url = "2.5.0"
+webp = "0.2.6"
