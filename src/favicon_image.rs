@@ -1,3 +1,4 @@
+use image::{imageops::FilterType, ImageFormat};
 use std::io;
 use thiserror::Error;
 
@@ -51,19 +52,32 @@ impl FaviconImage {
         writer.write_all(webp.as_ref())?;
         Ok(())
     }
+
+    pub fn resize(self, size: u32) -> Self {
+        let data = self.data.resize_to_fill(size, size, FilterType::Lanczos3);
+        Self { data, ..self }
+    }
+
+    pub fn reformat(self, format: ImageFormat) -> Self {
+        Self {
+            format: Some(format),
+            ..self
+        }
+    }
 }
 
 #[cfg(feature = "server")]
 mod server {
+    use crate::DEFAULT_IMAGE_FORMAT;
+
     use super::*;
     use axum::response::IntoResponse;
 
     impl IntoResponse for FaviconImage {
         fn into_response(self) -> axum::response::Response {
             // Determine content type
-            // TODO: use accept-content header to determine output format
-            let format = self.format.unwrap_or(image::ImageFormat::Jpeg);
-            let content_type = format.content_type();
+            let format = self.format.unwrap_or(DEFAULT_IMAGE_FORMAT);
+            let content_type = format.to_mime_type();
 
             // Write image to buffer
             let mut body = io::Cursor::new(Vec::new());
@@ -75,31 +89,5 @@ mod server {
 
     trait ImageFormatContentTypeExt {
         fn content_type(&self) -> String;
-    }
-
-    impl ImageFormatContentTypeExt for image::ImageFormat {
-        fn content_type(&self) -> String {
-            match self {
-                image::ImageFormat::Png => "image/png",
-                image::ImageFormat::Jpeg => "image/jpeg",
-                image::ImageFormat::Gif => "image/gif",
-                image::ImageFormat::WebP => "image/webp",
-                image::ImageFormat::Tiff => "image/tiff",
-
-                image::ImageFormat::Bmp => "image/bmp",
-                image::ImageFormat::Ico => "image/x-icon",
-                image::ImageFormat::Avif => "image/avif",
-
-                image::ImageFormat::OpenExr => todo!(),
-                image::ImageFormat::Farbfeld => todo!(),
-                image::ImageFormat::Qoi => todo!(),
-                image::ImageFormat::Pnm => todo!(),
-                image::ImageFormat::Tga => todo!(),
-                image::ImageFormat::Dds => todo!(),
-                image::ImageFormat::Hdr => todo!(),
-                _ => todo!(),
-            }
-            .into()
-        }
     }
 }

@@ -2,9 +2,7 @@ use std::io;
 use thiserror::Error;
 use url::Url;
 
-use crate::{fallback::generate_fallback, favicon::Favicon, favicon_image::FaviconImage};
-
-pub const DEFAULT_IMAGE_SIZE: u32 = 256;
+use crate::favicon_image::FaviconImage;
 
 #[derive(Debug, Clone)]
 struct Link {
@@ -48,26 +46,8 @@ pub enum ScrapeError {
     LinkNotFound,
 }
 
-pub async fn get_favicon(target_url: &Url, size: Option<u32>) -> Favicon {
-    match fetch_favicon(target_url).await {
-        // We have an image from the target, resize if applicable and return
-        Ok(mut image) => {
-            if let Some(size) = size {
-                image.resize(size);
-            }
-            image
-        }
-
-        // We didn't get an image, generate one
-        Err(error) => Favicon::Fallback(
-            generate_fallback(target_url.to_string(), size.unwrap_or(DEFAULT_IMAGE_SIZE)),
-            error,
-        ),
-    }
-}
-
 /// Fetch the favicon for a given url
-pub async fn fetch_favicon(target_url: &Url) -> Result<Favicon, GetFaviconError> {
+pub async fn fetch_favicon(target_url: &Url) -> Result<FaviconImage, GetFaviconError> {
     // Determine favicon url
     let image_url = scrape_link_tags(target_url)
         .await
@@ -108,10 +88,10 @@ pub async fn fetch_favicon(target_url: &Url) -> Result<Favicon, GetFaviconError>
     })
     .await??;
 
-    Ok(Favicon::Image(FaviconImage {
+    Ok(FaviconImage {
         data: image_data,
         format: image_format,
-    }))
+    })
 }
 
 /// Scrape the <link /> tags from a given URL to find a favicon url

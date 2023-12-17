@@ -1,6 +1,5 @@
 mod cli_args;
 mod fallback;
-mod favicon;
 mod favicon_image;
 mod get_favicon;
 mod image_writer;
@@ -13,7 +12,11 @@ use std::io::Write;
 use clap::Parser;
 use cli_args::{Cli, Command};
 use get_favicon::fetch_favicon;
+use image::ImageFormat;
 use image_writer::ImageWriter;
+
+pub const DEFAULT_IMAGE_SIZE: u32 = 256;
+pub const DEFAULT_IMAGE_FORMAT: ImageFormat = ImageFormat::Jpeg;
 
 #[tokio::main]
 async fn main() {
@@ -42,17 +45,17 @@ async fn main() {
 
             // Resize the image
             if let Some(size) = size {
-                favicon.resize(size)
+                favicon = favicon.resize(size);
             }
 
             // Format the image
             if let Some(format) = format {
-                favicon.format(format);
+                favicon = favicon.reformat(format);
             }
 
             // Write the image
             let mut writer = ImageWriter::new(out);
-            writer.write_image(favicon.image()).unwrap();
+            writer.write_image(&favicon).unwrap();
             writer.flush().unwrap();
         }
 
