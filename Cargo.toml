@@ -19,7 +19,7 @@ axum = { version = "0.6.19", optional = true }
 tower-http = { version = "0.4.3", features = ["trace", "cors"], optional = true }
 tower = { version = "0.4.13", optional = true }
 tracing = { version = "0.1.40", optional = true }
-tracing-subscriber = { version = "0.3.18", optional = true }
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"], optional = true }
 
 clap = { version = "4.4.11", features = ["derive"] }
 image = "0.24.7"
