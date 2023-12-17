@@ -104,7 +104,7 @@ async fn get_favicon_handler(
 
     // Get the favicon
     let favicon_res = match &target_url {
-        Some(target_url) => fetch_favicon(target_url).await,
+        Some(target_url) => fetch_favicon(target_url, size.unwrap_or(DEFAULT_IMAGE_SIZE)).await,
         None => Err(GetFaviconError::InvalidUrl),
     };
 

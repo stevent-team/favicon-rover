@@ -29,7 +29,7 @@ async fn main() {
             format,
         }) => {
             // Get favicon (may be a fallback)
-            let mut favicon = match fetch_favicon(&url).await {
+            let mut favicon = match fetch_favicon(&url, size.unwrap_or(DEFAULT_IMAGE_SIZE)).await {
                 Ok(favicon) => favicon,
                 Err(err) => {
                     eprintln!("failed to fetch favicon: {}", err);
