@@ -74,7 +74,7 @@ pub struct ServerOptions {
     #[arg(short, long, default_value_t = 3000)]
     pub port: u16,
 
-    /// URL or regex allowed by CORS
+    /// URL or regex allowed by CORS (multiple allowed)
     #[arg(short, long, default_values_t = [String::from("*")])]
     pub origin: Vec<String>,
 }

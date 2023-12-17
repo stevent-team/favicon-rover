@@ -12,7 +12,7 @@ authors = ["Benji Grant", "Ewan Breakey"]
 
 [features]
 default = []
-server = ["dep:axum", "dep:tower-http", "dep:tower", "dep:tracing-subscriber", "dep:tracing", "dep:accept-header", "dep:mime"]
+server = ["dep:axum", "dep:tower-http", "dep:tower", "dep:tracing-subscriber", "dep:tracing", "dep:accept-header", "dep:mime", "dep:regex"]
 
 [dependencies]
 axum = { version = "0.6.19", optional = true }
@@ -33,4 +33,5 @@ url = "2.5.0"
 webp = "0.2.6"
 accept-header = { version = "0.2.3", optional = true}
 mime = { version = "0.3.17", optional = true }
+regex = { version = "1.10.2", optional = true }
 lazy_static = "1.4.0"

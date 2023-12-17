@@ -11,7 +11,6 @@ use crate::favicon_image::FaviconImage;
 const BOT_USER_AGENT: &str = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36";
 
 static REQWEST_CLIENT: OnceLock<Client> = OnceLock::new();
-
 fn reqwest_client() -> &'static Client {
     REQWEST_CLIENT.get_or_init(|| Client::builder().build().unwrap())
 }

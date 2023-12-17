@@ -3,16 +3,19 @@ mod favicon_response;
 use std::collections::HashMap;
 use std::net::{AddrParseError, IpAddr, SocketAddr};
 use std::str::FromStr;
+use std::sync::OnceLock;
 
 use accept_header::Accept;
 use axum::extract::{Path, Query};
-use axum::http::HeaderMap;
+use axum::http::{header, HeaderMap, Method};
 use axum::response::IntoResponse;
 use axum::{routing::get, Router};
 use image::ImageFormat;
 use lazy_static::lazy_static;
 use mime::Mime;
+use regex::Regex;
 use thiserror::Error;
+use tower_http::cors::{AllowOrigin, Any, CorsLayer};
 use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
 use tracing::Level;
 use url::Url;
@@ -36,6 +39,27 @@ lazy_static! {
     };
 }
 
+enum CorsOrigin {
+    Regex(Regex),
+    String(String),
+}
+
+static CORS_ORIGINS: OnceLock<Vec<CorsOrigin>> = OnceLock::new();
+fn cors_origins(origins: &[String]) -> &'static Vec<CorsOrigin> {
+    CORS_ORIGINS.get_or_init(|| {
+        origins
+            .iter()
+            .map(|o| {
+                if o.starts_with('/') && o.ends_with('/') {
+                    CorsOrigin::Regex(Regex::new(o.split_at(1).1.split_at(o.len() - 2).0).unwrap())
+                } else {
+                    CorsOrigin::String(o.to_owned())
+                }
+            })
+            .collect()
+    })
+}
+
 #[derive(Error, Debug)]
 pub enum ServerError {
     #[error(transparent)]
@@ -50,9 +74,28 @@ pub async fn start_server(options: ServerOptions) -> Result<(), ServerError> {
         .compact()
         .init();
 
+    // Cors
+    let mut cors = CorsLayer::new()
+        .allow_headers([header::ACCEPT, header::CONTENT_TYPE])
+        .allow_methods([Method::GET, Method::OPTIONS, Method::HEAD]);
+
+    if options.origin.len() == 1 && options.origin[0] == "*" {
+        cors = cors.allow_origin(Any)
+    } else if options.origin.len() > 1 && options.origin.iter().any(|o| o == "*") {
+        panic!("Wildcard (*) origin must be the only origin");
+    } else {
+        cors = cors.allow_origin(AllowOrigin::predicate(move |origin, _| {
+            cors_origins(&options.origin).iter().any(|o| match o {
+                CorsOrigin::Regex(re) => re.is_match(origin.to_str().unwrap()),
+                CorsOrigin::String(o) => o == origin.to_str().unwrap(),
+            })
+        }))
+    }
+
     // Define axum app
     let app = Router::new()
         .route("/:path", get(get_favicon_handler))
+        .layer(cors)
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
