@@ -2,7 +2,7 @@ use crate::favicon_image::FaviconImage;
 use image::{DynamicImage, RgbaImage};
 use resvg::{
     tiny_skia,
-    usvg::{self, fontdb, Options, TreeParsing, TreeTextToPath},
+    usvg::{self, fontdb, Options, Size, TreeParsing, TreeTextToPath},
     Tree,
 };
 
@@ -24,6 +24,9 @@ pub fn generate_fallback(name: String, size: u32) -> FaviconImage {
 
         let mut tree = usvg::Tree::from_data(fallback_svg.as_bytes(), &Options::default()).unwrap();
         tree.convert_text(&fontdb);
+        tree.size = tree
+            .size
+            .scale_to(Size::from_wh(size as f32, size as f32).unwrap());
         Tree::from_usvg(&tree)
     };
 

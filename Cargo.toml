@@ -31,3 +31,6 @@ tl = "0.7.7"
 tokio = { version = "1.35.0", features = ["full"] }
 url = "2.5.0"
 webp = "0.2.6"
+accept-header = "0.2.3"
+mime = "0.3.17"
+lazy_static = "1.4.0"

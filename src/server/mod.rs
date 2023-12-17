@@ -4,11 +4,14 @@ use std::collections::HashMap;
 use std::net::{AddrParseError, IpAddr, SocketAddr};
 use std::str::FromStr;
 
+use accept_header::Accept;
 use axum::extract::{Path, Query};
 use axum::http::HeaderMap;
 use axum::response::IntoResponse;
 use axum::{routing::get, Router};
 use image::ImageFormat;
+use lazy_static::lazy_static;
+use mime::Mime;
 use thiserror::Error;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
 use tracing::Level;
@@ -20,6 +23,18 @@ use crate::DEFAULT_IMAGE_FORMAT;
 use crate::DEFAULT_IMAGE_SIZE;
 
 use self::favicon_response::FaviconResponse;
+
+lazy_static! {
+    static ref SUPPORTED_OUTPUT_MIME_TYPES: Vec<Mime> = {
+        use ImageFormat::*;
+        [
+            Png, Jpeg, Gif, WebP, Pnm, Tiff, Tga, Dds, Bmp, Ico, Hdr, OpenExr, Farbfeld, Qoi,
+        ]
+        .into_iter()
+        .map(|format| Mime::from_str(format.to_mime_type()).unwrap())
+        .collect()
+    };
+}
 
 #[derive(Error, Debug)]
 pub enum ServerError {
@@ -73,9 +88,13 @@ async fn get_favicon_handler(
 
     // Determine requested format
     let format: Option<ImageFormat> = headers.get(axum::http::header::ACCEPT).and_then(|accept| {
-        // TODO: parse accept header, determine most desired content type
-        let desired_mime_type = todo!();
-        ImageFormat::from_mime_type(desired_mime_type)
+        // Parse accept header, determine most desired content type
+        let accept: Accept = accept.to_str().unwrap().parse().unwrap();
+        let mime_type = accept
+            .negotiate(&SUPPORTED_OUTPUT_MIME_TYPES)
+            .unwrap()
+            .to_string();
+        ImageFormat::from_mime_type(mime_type)
     });
 
     // Parse the provided url
@@ -84,8 +103,8 @@ async fn get_favicon_handler(
         .or_else(|| Url::parse(&format!("http://{}", target_url_input)).ok());
 
     // Get the favicon
-    let favicon_res = match target_url {
-        Some(target_url) => fetch_favicon(&target_url).await,
+    let favicon_res = match &target_url {
+        Some(target_url) => fetch_favicon(target_url).await,
         None => Err(GetFaviconError::InvalidUrl),
     };
 
