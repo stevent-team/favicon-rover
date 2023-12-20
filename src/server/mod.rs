@@ -54,6 +54,7 @@ fn cors_origins(origins: &[String]) -> &'static Vec<CorsOrigin> {
             .iter()
             .map(|o| {
                 if o.starts_with('/') && o.ends_with('/') {
+                    // Remove the first and last slash
                     CorsOrigin::Regex(Regex::new(o.split_at(1).1.split_at(o.len() - 2).0).unwrap())
                 } else {
                     CorsOrigin::String(o.to_owned())
