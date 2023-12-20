@@ -1,6 +1,6 @@
 [package]
 name = "favicon-rover"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "A web service and CLI tool to fetch the favicon of any website"
 keywords = ["favicon", "scraper", "icon"]
