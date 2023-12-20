@@ -35,6 +35,7 @@ pub enum GetFaviconError {
     #[error("Failed to decode image: {0}")]
     ImageError(#[from] image::ImageError),
 
+    #[cfg(feature = "server")]
     #[error("Provided URL is not a valid url")]
     InvalidUrl,
 

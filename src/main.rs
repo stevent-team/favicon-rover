@@ -1,4 +1,5 @@
 mod cli_args;
+#[cfg(feature = "server")]
 mod fallback;
 mod favicon_image;
 mod get_favicon;
