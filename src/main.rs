@@ -1,52 +1,70 @@
-use clap::{Parser, Subcommand};
+mod cli_args;
+#[cfg(feature = "server")]
+mod fallback;
+mod favicon_image;
+mod get_favicon;
+mod image_writer;
 
-#[derive(Parser, Debug)]
-#[command(
-    author,
-    version,
-    about,
-    long_about = "Fetch the favicon from a specified url"
-)]
-struct Cli {
-    /// Host to fetch the favicon for
-    url: Option<String>,
+#[cfg(feature = "server")]
+mod server;
 
-    /// Square pixel size of the favicon
-    #[arg(short, long)]
-    size: Option<u16>,
+use std::io::Write;
 
-    /// Path to save favicon to if not using stdout
-    #[arg(short, long)]
-    out: Option<String>,
+use clap::Parser;
+use cli_args::{Cli, Command};
+use get_favicon::fetch_favicon;
+use image::ImageFormat;
+use image_writer::ImageWriter;
 
-    /// Image type to save favicon (overrides file extension if provided)
-    #[arg(short, long, default_value_t = String::from("webp"))]
-    r#type: String,
+pub const DEFAULT_IMAGE_SIZE: u32 = 256;
+pub const DEFAULT_IMAGE_FORMAT: ImageFormat = ImageFormat::Jpeg;
 
-    #[command(subcommand)]
-    command: Option<Commands>,
-}
-
-#[derive(Subcommand, Debug)]
-enum Commands {
-    /// Start a favicon scout web server
-    Serve {
-        /// Host to use for http server
-        #[arg(long, default_value_t = String::from("localhost"), value_name = "URL")]
-        host: String,
-
-        /// Port to use for http server
-        #[arg(short, long, default_value_t = 3000)]
-        port: i16,
-
-        /// URL or regex allowed by CORS
-        #[arg(short, long, default_values_t = [String::from("*")])]
-        origin: Vec<String>,
-    },
-}
-
-fn main() {
+#[tokio::main]
+async fn main() {
     let cli = Cli::parse();
+    match cli.command {
+        Some(Command::Get {
+            url,
+            out,
+            size,
+            format,
+        }) => {
+            // Get favicon (may be a fallback)
+            let mut favicon = match fetch_favicon(&url, size.unwrap_or(DEFAULT_IMAGE_SIZE)).await {
+                Ok(favicon) => favicon,
+                Err(err) => {
+                    eprintln!("failed to fetch favicon: {}", err);
+                    return;
+                }
+            };
 
-    dbg!(cli);
+            // Can we guess the format from the "out" path?
+            let format: Option<image::ImageFormat> = format.map(|f| f.into()).or_else(|| {
+                out.as_ref()
+                    .and_then(|path| image::ImageFormat::from_path(path).ok())
+            });
+
+            // Resize the image
+            if let Some(size) = size {
+                favicon = favicon.resize(size);
+            }
+
+            // Format the image
+            if let Some(format) = format {
+                favicon = favicon.reformat(format);
+            }
+
+            // Write the image
+            let mut writer = ImageWriter::new(out);
+            writer.write_image(&favicon).unwrap();
+            writer.flush().unwrap();
+        }
+
+        #[cfg(feature = "server")]
+        Some(Command::Serve(options)) => {
+            server::start_server(options).await.unwrap();
+        }
+
+        None => {}
+    }
 }
