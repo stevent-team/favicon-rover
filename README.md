@@ -71,6 +71,11 @@ favicon-rover serve --help # show help information
 
 Example: `http://localhost:3000/example.com?size=24`
 
+### Fonts
+
+The fallback image generation will attempt to query and load a "sans-serif" font. It will load your system fonts if available as well as any fonts
+in the current directory (`pwd`) when favicon-rover is started.
+
 ### CORS
 
 By default, any origin is allowed to make a request to this API. To lock it down, use the `--origin` command line options to specify any amount of origins. If an origin starts and ends with `/` it will be treated as a regexp. For example `favicon-rover serve -o http://example1.com -o /\.example2\.com$/` will accept any request from "http://example1.com" or from a subdomain of "example2.com".
