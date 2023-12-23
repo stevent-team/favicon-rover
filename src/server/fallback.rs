@@ -1,6 +1,6 @@
 use crate::favicon_image::FaviconImage;
 
-const FALLBACK_FONT_FAMILY: &str = "arial";
+const FALLBACK_FONT_FAMILY: &str = "sans-serif";
 
 pub fn generate_fallback(name: String, size: u32) -> FaviconImage {
     let fallback_svg = format!(

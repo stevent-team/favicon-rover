@@ -12,12 +12,13 @@ use resvg::{
 lazy_static! {
     static ref FONT_DB: fontdb::Database = {
         let mut db = fontdb::Database::new();
+
+        // Load system fonts if available
         db.load_system_fonts();
 
-        #[cfg(all(unix, not(any(target_os = "macos", target_os = "android"))))]
-        {
-            dbg!("Loading from /usr/share/fonts");
-            db.load_fonts_dir("/usr/share/fonts/");
+        // Load any fonts in the current directory
+        if let Ok(pwd_path) = std::env::current_dir() {
+            db.load_fonts_dir(pwd_path);
         }
 
         db
