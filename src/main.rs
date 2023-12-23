@@ -12,6 +12,7 @@ use cli_args::{Cli, Command};
 use favicon_image::FaviconImage;
 use image::ImageFormat;
 use image_writer::ImageWriter;
+use reqwest::Client;
 
 pub const DEFAULT_IMAGE_SIZE: u32 = 256;
 pub const DEFAULT_IMAGE_FORMAT: ImageFormat = ImageFormat::Jpeg;
@@ -28,7 +29,8 @@ async fn main() {
         }) => {
             // Get favicon (will not gen a fallback)
             let fetch_size = size.unwrap_or(DEFAULT_IMAGE_SIZE);
-            let mut favicon = match FaviconImage::fetch_for_url(&url, fetch_size).await {
+            let client = Client::new();
+            let mut favicon = match FaviconImage::fetch_for_url(&client, &url, fetch_size).await {
                 Ok(favicon) => favicon,
                 Err(err) => {
                     eprintln!("failed to fetch favicon: {}", err);

@@ -6,18 +6,12 @@ use reqwest::{
     header::{CONTENT_TYPE, USER_AGENT},
     Client,
 };
-use std::{io, sync::OnceLock};
+use std::io;
 use thiserror::Error;
 use url::Url;
 
 use scrape::{scrape_link_tags, ScrapeError};
 pub const BOT_USER_AGENT: &str = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36";
-
-// TODO: instead store a pool of clients on the axum state and pass a ref into the fetch() method
-static REQWEST_CLIENT: OnceLock<Client> = OnceLock::new();
-fn reqwest_client() -> &'static Client {
-    REQWEST_CLIENT.get_or_init(|| Client::builder().build().unwrap())
-}
 
 #[derive(Error, Debug)]
 pub enum FetchFaviconError {
@@ -43,14 +37,17 @@ pub enum FetchFaviconError {
 
 /// Fetch the favicon for a given url
 impl super::FaviconImage {
-    pub async fn fetch_for_url(target_url: &Url, size: u32) -> Result<Self, FetchFaviconError> {
+    pub async fn fetch_for_url(
+        client: &Client,
+        target_url: &Url,
+        size: u32,
+    ) -> Result<Self, FetchFaviconError> {
         // Determine favicon url
-        let image_url = scrape_link_tags(reqwest_client(), target_url, size)
+        let image_url = scrape_link_tags(client, target_url, size)
             .await
             .unwrap_or_else(|_| target_url.join("/favicon.ico").unwrap());
 
         // Fetch the image
-        let client = reqwest_client();
         let res = client
             .get(image_url)
             .header(USER_AGENT, BOT_USER_AGENT)

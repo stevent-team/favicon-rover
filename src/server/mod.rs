@@ -9,7 +9,7 @@ use std::str::FromStr;
 use std::sync::OnceLock;
 
 use accept_header::Accept;
-use axum::extract::{Path, Query};
+use axum::extract::{Path, Query, State};
 use axum::http::{HeaderMap, Method};
 use axum::response::IntoResponse;
 use axum::{routing::get, Router};
@@ -17,6 +17,7 @@ use image::ImageFormat;
 use lazy_static::lazy_static;
 use mime::Mime;
 use regex::Regex;
+use reqwest::Client;
 use thiserror::Error;
 use tower_http::cors::{AllowOrigin, Any, CorsLayer};
 use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
@@ -74,6 +75,11 @@ pub enum ServerError {
     InvalidHost(#[from] AddrParseError),
 }
 
+#[derive(Debug, Clone)]
+struct ServerState {
+    client: Client,
+}
+
 pub async fn start_server(options: ServerOptions) -> Result<(), ServerError> {
     // Init tracing
     tracing_subscriber::registry()
@@ -120,6 +126,11 @@ pub async fn start_server(options: ServerOptions) -> Result<(), ServerError> {
         }))
     }
 
+    // Create axum state
+    let state = ServerState {
+        client: Client::new(),
+    };
+
     // Define axum app
     let app = Router::new()
         .route("/:path", get(get_favicon_handler))
@@ -128,7 +139,8 @@ pub async fn start_server(options: ServerOptions) -> Result<(), ServerError> {
             TraceLayer::new_for_http()
                 .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
                 .on_response(DefaultOnResponse::new().level(Level::INFO)),
-        );
+        )
+        .with_state(state);
 
     // Parse address
     let addr = IpAddr::from_str(&options.host)?;
@@ -150,6 +162,7 @@ pub async fn start_server(options: ServerOptions) -> Result<(), ServerError> {
 }
 
 async fn get_favicon_handler(
+    State(state): State<ServerState>,
     Path(target_url_input): Path<String>,
     Query(params): Query<HashMap<String, String>>,
     headers: HeaderMap,
@@ -176,7 +189,12 @@ async fn get_favicon_handler(
     // Get the favicon
     let favicon_res = match &target_url {
         Some(target_url) => {
-            FaviconImage::fetch_for_url(target_url, size.unwrap_or(DEFAULT_IMAGE_SIZE)).await
+            FaviconImage::fetch_for_url(
+                &state.client,
+                target_url,
+                size.unwrap_or(DEFAULT_IMAGE_SIZE),
+            )
+            .await
         }
         None => Err(FetchFaviconError::InvalidUrl),
     };
