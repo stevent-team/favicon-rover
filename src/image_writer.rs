@@ -1,3 +1,5 @@
+//! Util struct for writing image data to a stream
+
 use std::fs;
 use std::io::{self, BufWriter};
 use std::path::PathBuf;

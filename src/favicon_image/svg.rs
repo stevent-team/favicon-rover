@@ -1,22 +1,32 @@
 //! Svg operations for favicon images
 
 use image::{DynamicImage, RgbaImage};
+use lazy_static::lazy_static;
 use resvg::{
     tiny_skia,
     usvg::{self, fontdb, Options, Size, TreeParsing, TreeTextToPath},
     Tree,
 };
 
+// Load fonts once
+// TODO: include a font file in this project for consistent results
+lazy_static! {
+    static ref FONT_DB: fontdb::Database = {
+        let mut db = fontdb::Database::new();
+        db.load_system_fonts();
+        for face in db.faces() {
+            eprintln!("{:?}", face);
+        }
+        db
+    };
+}
+
 impl super::FaviconImage {
     /// Rasterise an svg string to a formatless favicon image
     pub fn from_svg_str(svg: String, size: u32) -> Self {
         let rtree = {
-            // TODO: include a font file in this project for consistent results
-            let mut fontdb = fontdb::Database::new();
-            fontdb.load_system_fonts();
-
             let mut tree = usvg::Tree::from_data(svg.as_bytes(), &Options::default()).unwrap();
-            tree.convert_text(&fontdb);
+            tree.convert_text(&FONT_DB);
             tree.size = tree
                 .size
                 .scale_to(Size::from_wh(size as f32, size as f32).unwrap());
