@@ -14,9 +14,6 @@ lazy_static! {
     static ref FONT_DB: fontdb::Database = {
         let mut db = fontdb::Database::new();
         db.load_system_fonts();
-        for face in db.faces() {
-            eprintln!("{:?}", face);
-        }
         db
     };
 }

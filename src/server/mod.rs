@@ -20,7 +20,7 @@ use regex::Regex;
 use reqwest::Client;
 use thiserror::Error;
 use tower_http::cors::{AllowOrigin, Any, CorsLayer};
-use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
+use tower_http::trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer};
 use tracing::level_filters::LevelFilter;
 use tracing::Level;
 use tracing_subscriber::layer::SubscriberExt;
@@ -133,14 +133,16 @@ pub async fn start_server(options: ServerOptions) -> Result<(), ServerError> {
 
     // Define axum app
     let app = Router::new()
+        .route("/", get(|| async { "Favicon Rover" }))
         .route("/:path", get(get_favicon_handler))
+        .with_state(state)
         .layer(cors)
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
+                .on_request(DefaultOnRequest::new().level(Level::INFO))
                 .on_response(DefaultOnResponse::new().level(Level::INFO)),
-        )
-        .with_state(state);
+        );
 
     // Parse address
     let addr = IpAddr::from_str(&options.host)?;
@@ -167,6 +169,8 @@ async fn get_favicon_handler(
     Query(params): Query<HashMap<String, String>>,
     headers: HeaderMap,
 ) -> impl IntoResponse {
+    tracing::info!("Get favicon for {target_url_input:?}");
+
     // Determine requested size
     let size: Option<u32> = params.get("size").and_then(|s| s.parse().ok());
 
