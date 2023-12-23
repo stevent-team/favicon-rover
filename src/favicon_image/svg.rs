@@ -13,6 +13,13 @@ lazy_static! {
     static ref FONT_DB: fontdb::Database = {
         let mut db = fontdb::Database::new();
         db.load_system_fonts();
+
+        #[cfg(all(unix, not(any(target_os = "macos", target_os = "android"))))]
+        {
+            dbg!("Loading from /usr/share/fonts");
+            db.load_fonts_dir("/usr/share/fonts/");
+        }
+
         db
     };
 }
