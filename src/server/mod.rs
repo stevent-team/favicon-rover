@@ -155,7 +155,7 @@ pub async fn start_server(options: ServerOptions) -> Result<(), ServerError> {
         .with_graceful_shutdown(async {
             tokio::signal::ctrl_c()
                 .await
-                .expect("Failed to install Ctrl+C handler")
+                .expect("Failed to install Ctrl+C handler");
         })
         .await
         .unwrap();

@@ -9,7 +9,6 @@ use resvg::{
 };
 
 // Load fonts once
-// TODO: include a font file in this project for consistent results
 lazy_static! {
     static ref FONT_DB: fontdb::Database = {
         let mut db = fontdb::Database::new();
@@ -21,6 +20,11 @@ lazy_static! {
 impl super::FaviconImage {
     /// Rasterise an svg string to a formatless favicon image
     pub fn from_svg_str(svg: String, size: u32) -> Self {
+        dbg!("Showing fonts");
+        for font in FONT_DB.faces() {
+            dbg!(font);
+        }
+
         let rtree = {
             let mut tree = usvg::Tree::from_data(svg.as_bytes(), &Options::default()).unwrap();
             tree.convert_text(&FONT_DB);
