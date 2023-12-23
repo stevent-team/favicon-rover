@@ -1,3 +1,6 @@
+//! HTTP Server for fetching favicons by URL
+
+mod fallback;
 mod favicon_response;
 
 use std::collections::HashMap;
@@ -24,7 +27,8 @@ use tracing_subscriber::util::SubscriberInitExt;
 use url::Url;
 
 use crate::cli_args::ServerOptions;
-use crate::get_favicon::{fetch_favicon, GetFaviconError};
+use crate::favicon_image::fetch::FetchFaviconError;
+use crate::favicon_image::FaviconImage;
 use crate::DEFAULT_IMAGE_FORMAT;
 use crate::DEFAULT_IMAGE_SIZE;
 
@@ -171,8 +175,10 @@ async fn get_favicon_handler(
 
     // Get the favicon
     let favicon_res = match &target_url {
-        Some(target_url) => fetch_favicon(target_url, size.unwrap_or(DEFAULT_IMAGE_SIZE)).await,
-        None => Err(GetFaviconError::InvalidUrl),
+        Some(target_url) => {
+            FaviconImage::fetch_for_url(target_url, size.unwrap_or(DEFAULT_IMAGE_SIZE)).await
+        }
+        None => Err(FetchFaviconError::InvalidUrl),
     };
 
     // Construct a response
