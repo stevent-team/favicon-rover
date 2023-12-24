@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2](https://github.com/stevent-team/favicon-rover/compare/v0.1.1...v0.1.2) - 2023-12-24
+
+### Other
+- Document how fonts are loaded
+- Add call to load fonts from pwd when starting server
+- Explicitly load /usr/share/fonts
+- Add debug for fonts
+- Add additional tracing
+- Use specific arial font family for fallback generation
+- Store reqwest client in axum state
+- Restructure modules to centralise favicon utils
+
 ## [0.1.1](https://github.com/stevent-team/favicon-rover/compare/v0.1.0...v0.1.1) - 2023-12-20
 
 ### Other
