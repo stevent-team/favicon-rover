@@ -1,9 +1,10 @@
-use crate::fallback::generate_fallback;
+use crate::favicon_image::fetch::FetchFaviconError;
 use crate::favicon_image::FaviconImage;
-use crate::get_favicon::GetFaviconError;
 use axum::http::{header, HeaderMap, HeaderName};
 use axum::response::IntoResponse;
 use image::ImageFormat;
+
+use super::fallback::generate_fallback;
 
 #[derive(Debug)]
 pub struct FaviconResponse {
@@ -13,7 +14,7 @@ pub struct FaviconResponse {
 
 impl FaviconResponse {
     pub fn from_fetch_result(
-        res_value: Result<FaviconImage, GetFaviconError>,
+        res_value: Result<FaviconImage, FetchFaviconError>,
         host: String,
         size: u32,
         format: ImageFormat,

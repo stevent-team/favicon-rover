@@ -1,8 +1,5 @@
 mod cli_args;
-#[cfg(feature = "server")]
-mod fallback;
 mod favicon_image;
-mod get_favicon;
 mod image_writer;
 
 #[cfg(feature = "server")]
@@ -12,9 +9,10 @@ use std::io::Write;
 
 use clap::Parser;
 use cli_args::{Cli, Command};
-use get_favicon::fetch_favicon;
+use favicon_image::FaviconImage;
 use image::ImageFormat;
 use image_writer::ImageWriter;
+use reqwest::Client;
 
 pub const DEFAULT_IMAGE_SIZE: u32 = 256;
 pub const DEFAULT_IMAGE_FORMAT: ImageFormat = ImageFormat::Jpeg;
@@ -29,8 +27,10 @@ async fn main() {
             size,
             format,
         }) => {
-            // Get favicon (may be a fallback)
-            let mut favicon = match fetch_favicon(&url, size.unwrap_or(DEFAULT_IMAGE_SIZE)).await {
+            // Get favicon (will not gen a fallback)
+            let fetch_size = size.unwrap_or(DEFAULT_IMAGE_SIZE);
+            let client = Client::new();
+            let mut favicon = match FaviconImage::fetch_for_url(&client, &url, fetch_size).await {
                 Ok(favicon) => favicon,
                 Err(err) => {
                     eprintln!("failed to fetch favicon: {}", err);
