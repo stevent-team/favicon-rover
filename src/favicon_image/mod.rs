@@ -4,7 +4,7 @@
 pub mod fetch;
 mod svg;
 
-use image::{imageops::FilterType, ImageFormat};
+use image::{imageops::FilterType, DynamicImage, ImageFormat};
 use std::io;
 use thiserror::Error;
 
@@ -53,9 +53,22 @@ impl FaviconImage {
         &self,
         writer: &mut (impl io::Write + io::Seek),
     ) -> Result<(), WriteImageError> {
-        let encoder = webp::Encoder::from_image(&self.data).expect("Image format is supported");
+        // Ensure image data is in a format supported by `webp`
+        let data = match self.data {
+            DynamicImage::ImageRgba8(_) => &self.data,
+            DynamicImage::ImageRgb8(_) => &self.data,
+            _ => {
+                let data = self.data.to_rgba8();
+                &DynamicImage::ImageRgba8(data)
+            }
+        };
+
+        // Write to webp
+        let encoder =
+            webp::Encoder::from_image(data).map_err(|_| WriteImageError::UnsupportedImageFormat)?;
         let webp = encoder.encode(WEBP_QUALITY);
         writer.write_all(webp.as_ref())?;
+
         Ok(())
     }
 
