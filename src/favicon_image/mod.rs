@@ -105,8 +105,4 @@ mod server {
             ([("content-type", content_type)], body.into_inner()).into_response()
         }
     }
-
-    trait ImageFormatContentTypeExt {
-        fn content_type(&self) -> String;
-    }
 }
