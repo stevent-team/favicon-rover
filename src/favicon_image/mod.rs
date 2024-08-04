@@ -40,9 +40,7 @@ impl FaviconImage {
         }
 
         // Convert image format to output format type
-        let output_format: image::ImageOutputFormat = format
-            .try_into()
-            .map_err(|_| WriteImageError::UnsupportedImageFormat)?;
+        let output_format: image::ImageOutputFormat = format.into();
 
         // Write image
         self.data.write_to(writer, output_format)?;
