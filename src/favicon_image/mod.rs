@@ -4,7 +4,7 @@
 pub mod fetch;
 mod svg;
 
-use image::{imageops::FilterType, ImageFormat};
+use image::{imageops::FilterType, DynamicImage, ImageFormat};
 use std::io;
 use thiserror::Error;
 
@@ -40,9 +40,7 @@ impl FaviconImage {
         }
 
         // Convert image format to output format type
-        let output_format: image::ImageOutputFormat = format
-            .try_into()
-            .map_err(|_| WriteImageError::UnsupportedImageFormat)?;
+        let output_format: image::ImageOutputFormat = format.into();
 
         // Write image
         self.data.write_to(writer, output_format)?;
@@ -53,9 +51,22 @@ impl FaviconImage {
         &self,
         writer: &mut (impl io::Write + io::Seek),
     ) -> Result<(), WriteImageError> {
-        let encoder = webp::Encoder::from_image(&self.data).expect("Image format is supported");
+        // Ensure image data is in a format supported by `webp`
+        let data = match self.data {
+            DynamicImage::ImageRgba8(_) => &self.data,
+            DynamicImage::ImageRgb8(_) => &self.data,
+            _ => {
+                let data = self.data.to_rgba8();
+                &DynamicImage::ImageRgba8(data)
+            }
+        };
+
+        // Write to webp
+        let encoder =
+            webp::Encoder::from_image(data).map_err(|_| WriteImageError::UnsupportedImageFormat)?;
         let webp = encoder.encode(WEBP_QUALITY);
         writer.write_all(webp.as_ref())?;
+
         Ok(())
     }
 
@@ -91,9 +102,5 @@ mod server {
 
             ([("content-type", content_type)], body.into_inner()).into_response()
         }
-    }
-
-    trait ImageFormatContentTypeExt {
-        fn content_type(&self) -> String;
     }
 }
