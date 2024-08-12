@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3](https://github.com/stevent-team/favicon-rover/compare/v0.1.2...v0.1.3) - 2024-08-05
+
+### Other
+- Remove error check for infallible image output format conversion
+- Remove unused `ImageFormatContentTypeExt` trait
+- Convert image data to supported format before encoding as webp
+
 ## [0.1.2](https://github.com/stevent-team/favicon-rover/compare/v0.1.1...v0.1.2) - 2023-12-24
 
 ### Other
