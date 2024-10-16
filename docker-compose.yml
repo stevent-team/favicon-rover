@@ -1,0 +1,9 @@
+services:
+  favicon-rover:
+    container_name: favicon-rover
+    # image: ghcr.io/stevent-team/favicon-rover
+    build: .
+    ports:
+      - "127.0.0.1:3000:3000"
+    command: "--origin '*'"  # put any custom flags for `favicon-rover serve` here
+    restart: unless-stopped
